@@ -42,7 +42,7 @@
     "publish": {
       "provider": "github",
       "owner": "leifericf",
-      "repo": "noumenon"
+      "repo": "noumenon-app"
     }
   }
 }

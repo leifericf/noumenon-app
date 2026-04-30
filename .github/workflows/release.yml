@@ -1,0 +1,42 @@
+name: Release
+on:
+  push:
+    tags: [v*]
+  workflow_dispatch:
+    inputs:
+      dry-run:
+        description: 'Build without publishing'
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+jobs:
+  build-electron:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: 21 }
+      - uses: DeLaGuardo/setup-clojure@13.0
+        with: { cli: latest }
+      - uses: actions/setup-node@v4
+        with: { node-version: 22 }
+      - name: Install dependencies
+        run: npm ci
+      - name: Build ClojureScript
+        run: npx shadow-cljs release app
+      - name: Package Electron app
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          if [ "${{ inputs.dry-run }}" = "true" ]; then
+            npx electron-builder build
+          else
+            npx electron-builder build --publish always
+          fi
